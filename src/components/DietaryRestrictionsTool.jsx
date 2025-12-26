@@ -172,7 +172,7 @@ export default function DietaryRestrictionsTool({ data }) {
     if (summary.airborne.length > 0) {
       text += "Airborne Allergies:\n";
       summary.airborne.forEach(([item, people]) => {
-        text += `• ${item}\n`;
+        text += `${item}\n`;
         people.forEach(p => {
           text += `  - ${p.name}${p.notes ? ` (${p.notes})` : ''}\n`;
         });
@@ -181,12 +181,12 @@ export default function DietaryRestrictionsTool({ data }) {
     }
 
     if (summary.other.length > 0) {
-      text += "Other Dietary Restrictions:\n";
+      text += "Dietary Restrictions:\n";
       summary.other.forEach(([item, people]) => {
-        text += `• ${item}\n`;
+        text += `${item}\n`;
         people.forEach(p => {
           const detail = p.severity !== "yes" ? ` (${p.severity})` : '';
-          text += `  - ${p.name}${detail}\n`;
+          text += `  • ${p.name}${detail}\n`;
         });
       });
       text += "\n";
@@ -531,59 +531,60 @@ export default function DietaryRestrictionsTool({ data }) {
 
           {/* Airborne Allergies */}
           {summary.airborne.length > 0 && (
-            <div>
-              <h3 class="text-lg font-semibold text-red-600 dark:text-red-400 mb-2">
-                Airborne Allergies
+            <div class="bg-red-50 dark:bg-red-950 border-2 border-red-500 dark:border-red-600 rounded-lg p-6">
+              <h3 class="text-xl font-bold text-red-700 dark:text-red-400 mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                AIRBORNE ALLERGIES - CRITICAL
               </h3>
-              <ul class="space-y-2">
+              <div class="space-y-4">
                 {summary.airborne.map(([item, people]) => (
-                  <li key={item} class="text-gray-900 dark:text-gray-100">
-                    <span class="font-medium">• {item}</span>
-                    <ul class="ml-4 mt-1 space-y-1">
+                  <div key={item}>
+                    <h4 class="font-bold text-red-800 dark:text-red-300 mb-2 text-lg">{item}</h4>
+                    <ul class="ml-6 space-y-1 list-disc marker:text-red-600">
                       {people.map(p => (
-                        <li key={p.name} class="text-gray-700 dark:text-gray-300">
-                          - {p.name}{p.notes ? ` (${p.notes})` : ''}
+                        <li key={p.name} class="text-red-900 dark:text-red-200">
+                          {p.name}
                         </li>
                       ))}
                     </ul>
-                  </li>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
           )}
 
           {/* Other Dietary Restrictions */}
           {summary.other.length > 0 && (
             <div>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                Other Dietary Restrictions
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                Dietary Restrictions
               </h3>
-              <ul class="space-y-2">
+              <div class="space-y-4">
                 {summary.other.map(([item, people]) => (
-                  <li key={item} class="text-gray-900 dark:text-gray-100">
-                    <span class="font-medium">• {item}</span>
-                    <ul class="ml-4 mt-1 space-y-1">
+                  <div key={item}>
+                    <h4 class="font-bold text-gray-900 dark:text-gray-100 mb-2">{item}</h4>
+                    <ul class="ml-6 space-y-1 list-disc marker:text-blue-600">
                       {people.map(p => (
                         <li key={p.name} class="text-gray-700 dark:text-gray-300">
-                          - {p.name}{p.severity !== 'yes' ? ` (${p.severity})` : ''}
+                          {p.name}{p.severity !== 'yes' ? ` (${p.severity})` : ''}
                         </li>
                       ))}
                     </ul>
-                  </li>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
           )}
 
           {/* Restrictions by Person */}
           <div>
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
               Restrictions by Person
             </h3>
-            <ul class="space-y-2">
+            <ul class="ml-6 space-y-2 list-disc marker:text-blue-600">
               {summary.byPerson.map(person => (
                 <li key={person.name} class="text-gray-900 dark:text-gray-100">
-                  <span class="font-medium">• {person.name}:</span>{' '}
+                  <span class="font-medium">{person.name}:</span>{' '}
                   {person.restrictions.length > 0 ? (
                     <span class="text-gray-700 dark:text-gray-300">
                       {person.restrictions.map(r => {
