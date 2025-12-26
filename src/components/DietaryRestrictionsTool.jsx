@@ -380,6 +380,10 @@ export default function DietaryRestrictionsTool({ data }) {
     return data.members
       .filter(member => {
         const memberNameLower = member.name.toLowerCase();
+        // Only show approved members
+        if (!member.approved) {
+          return false;
+        }
         // Always exclude already selected attendees
         if (selectedAttendees.includes(memberNameLower)) {
           return false;

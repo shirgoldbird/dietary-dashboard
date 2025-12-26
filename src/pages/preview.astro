@@ -1,0 +1,19 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import PreviewView from '../components/PreviewView.jsx';
+import dietaryData from '../data/dietary-restrictions.json';
+---
+
+<Layout title="Preview - Dietary Dashboard">
+  <div class="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <Header />
+
+    <main class="space-y-6">
+      <PreviewView data={dietaryData} client:load />
+    </main>
+
+    <Footer />
+  </div>
+</Layout>

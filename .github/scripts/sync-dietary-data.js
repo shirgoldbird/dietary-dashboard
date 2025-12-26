@@ -142,7 +142,8 @@ function parseSheetData(rows) {
 
   const members = headers.map(name => ({
     name: name.trim(),
-    restrictions: []
+    restrictions: [],
+    approved: false // Default to not approved
   }));
 
   const restrictionsList = [];
@@ -154,7 +155,19 @@ function parseSheetData(rows) {
 
     if (!restrictionName) continue; // Skip empty rows
 
-    // Skip "Attending?" row - it's not a dietary restriction
+    // Handle "Approved?" row - track approval status
+    if (restrictionName.toLowerCase().includes('approved')) {
+      console.log('✅ Processing "Approved?" row');
+      for (let j = 1; j < row.length && j <= headers.length; j++) {
+        const cellValue = row[j]?.toString().trim().toLowerCase() || "";
+        if (cellValue === 'true' || cellValue === 'yes') {
+          members[j - 1].approved = true;
+        }
+      }
+      continue;
+    }
+
+    // Skip "Attending?" row if present (legacy)
     if (restrictionName.toLowerCase().includes('attending')) {
       console.log('⏭️  Skipping "Attending?" row');
       continue;
