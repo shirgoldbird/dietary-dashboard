@@ -2,16 +2,16 @@
 import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
-import DietaryRestrictionsTool from '../components/DietaryRestrictionsTool.jsx';
+import ByPersonView from '../components/ByPersonView.jsx';
 import dietaryData from '../data/dietary-restrictions.json';
 ---
 
-<Layout title="Meal Planner - Dietary Dashboard">
+<Layout title="By Person - Dietary Dashboard">
   <div class="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
     <Header />
 
     <main class="space-y-6">
-      <DietaryRestrictionsTool data={dietaryData} client:load />
+      <ByPersonView data={dietaryData} client:load />
     </main>
 
     <Footer />
