@@ -11,7 +11,9 @@ export default function DietaryRestrictionsTool({ data }) {
   const [searchInput, setSearchInput] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
   const [currentStep, setCurrentStep] = useState(1); // 1 = selection, 2 = summary
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const inputRef = useRef(null);
+  const blurTimeoutRef = useRef(null);
 
   // URL Parameter Sync - Load from URL on mount
   useEffect(() => {
@@ -47,7 +49,13 @@ export default function DietaryRestrictionsTool({ data }) {
     };
 
     window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      // Clean up blur timeout on unmount
+      if (blurTimeoutRef.current) {
+        clearTimeout(blurTimeoutRef.current);
+      }
+    };
   }, []);
 
   function generateSummary(attendees, meal) {
@@ -219,13 +227,23 @@ export default function DietaryRestrictionsTool({ data }) {
 
   // Autocomplete functions
   function getFilteredMembers() {
-    if (!searchInput.trim()) return data.members;
+    const search = searchInput.toLowerCase().trim();
 
-    const search = searchInput.toLowerCase();
-    return data.members.filter(member =>
-      member.name.toLowerCase().includes(search) &&
-      !selectedAttendees.includes(member.name.toLowerCase())
-    );
+    return data.members
+      .filter(member => {
+        const memberNameLower = member.name.toLowerCase();
+        // Always exclude already selected attendees
+        if (selectedAttendees.includes(memberNameLower)) {
+          return false;
+        }
+        // If there's a search term, filter by it
+        if (search) {
+          return memberNameLower.includes(search);
+        }
+        // If no search term, show all unselected members
+        return true;
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
   }
 
   function handleSelectMember(memberName) {
@@ -234,7 +252,9 @@ export default function DietaryRestrictionsTool({ data }) {
       setSelectedAttendees(prev => [...prev, lowerName]);
     }
     setSearchInput("");
-    setShowDropdown(false);
+    setHighlightedIndex(-1);
+    setShowDropdown(true);
+    // Keep input focused for quick multiple selections
     if (inputRef.current) {
       inputRef.current.focus();
     }
@@ -247,15 +267,46 @@ export default function DietaryRestrictionsTool({ data }) {
   function handleSearchInput(e) {
     setSearchInput(e.target.value);
     setShowDropdown(true);
+    setHighlightedIndex(-1);
   }
 
   function handleSearchFocus() {
+    // Cancel any pending blur timeout
+    if (blurTimeoutRef.current) {
+      clearTimeout(blurTimeoutRef.current);
+    }
     setShowDropdown(true);
   }
 
   function handleSearchBlur() {
     // Delay hiding dropdown to allow click events to fire
-    setTimeout(() => setShowDropdown(false), 200);
+    blurTimeoutRef.current = setTimeout(() => {
+      setShowDropdown(false);
+      setHighlightedIndex(-1);
+    }, 200);
+  }
+
+  function handleKeyDown(e) {
+    const filteredMembers = getFilteredMembers();
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setShowDropdown(true);
+      setHighlightedIndex(prev =>
+        prev < filteredMembers.length - 1 ? prev + 1 : prev
+      );
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlightedIndex(prev => prev > 0 ? prev - 1 : -1);
+    } else if (e.key === 'Enter' && highlightedIndex >= 0) {
+      e.preventDefault();
+      if (filteredMembers[highlightedIndex]) {
+        handleSelectMember(filteredMembers[highlightedIndex].name);
+      }
+    } else if (e.key === 'Escape') {
+      setShowDropdown(false);
+      setHighlightedIndex(-1);
+    }
   }
 
   // Get member display name from lowercase name
@@ -312,6 +363,7 @@ export default function DietaryRestrictionsTool({ data }) {
                 onInput={handleSearchInput}
                 onFocus={handleSearchFocus}
                 onBlur={handleSearchBlur}
+                onKeyDown={handleKeyDown}
                 placeholder={selectedAttendees.length === 0 ? "Type to search attendees..." : "Add more..."}
                 class="flex-1 min-w-[150px] outline-none bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
               />
@@ -320,11 +372,21 @@ export default function DietaryRestrictionsTool({ data }) {
             {/* Dropdown */}
             {showDropdown && getFilteredMembers().length > 0 && (
               <div class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                {getFilteredMembers().map(member => (
+                {getFilteredMembers().map((member, index) => (
                   <button
                     key={member.name}
+                    onMouseDown={() => {
+                      // Cancel blur timeout when clicking dropdown
+                      if (blurTimeoutRef.current) {
+                        clearTimeout(blurTimeoutRef.current);
+                      }
+                    }}
                     onClick={() => handleSelectMember(member.name)}
-                    class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 transition-colors first:rounded-t-lg last:rounded-b-lg"
+                    class={`w-full text-left px-4 py-2 text-gray-900 dark:text-gray-100 transition-colors first:rounded-t-lg last:rounded-b-lg ${
+                      index === highlightedIndex
+                        ? 'bg-green-100 dark:bg-green-900'
+                        : 'hover:bg-gray-100 dark:hover:bg-gray-600'
+                    }`}
                   >
                     {member.name}
                   </button>
