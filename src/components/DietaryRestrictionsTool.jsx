@@ -335,7 +335,7 @@ export default function DietaryRestrictionsTool({ data }) {
       try {
         await navigator.share({
           title: title,
-          text: 'Check out these dietary restrictions',
+          text: 'Here\'s the dietary needs for our upcoming meal:',
           url: url,
         });
         setShared(true);
