@@ -4,7 +4,10 @@ export interface Props {
   description?: string;
 }
 
-const { title, description = "Dietary Dashboard - A static site for listing dietary restrictions and allergies for the guests at your meal." } = Astro.props;
+const {
+  title,
+  description = "Dietary Dashboard - Get a helpful summary of dietary restrictions for the guests at your meal.",
+} = Astro.props;
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 ---
 
@@ -17,36 +20,65 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
     <!-- Critical CSS to prevent FOUC -->
     <style is:inline>
       /* Prevent flash by setting initial colors */
-      html { background-color: #f9fafb; color: #1a1a1a; }
-      html.dark { background-color: #111827; color: #f9fafb; }
-      body { background-color: #f9fafb; color: #1a1a1a; }
-      body.dark { background-color: #111827; color: #f9fafb; }
+      html {
+        background-color: #f9fafb;
+        color: #1a1a1a;
+      }
+      html.dark {
+        background-color: #111827;
+        color: #f9fafb;
+      }
+      body {
+        background-color: #f9fafb;
+        color: #1a1a1a;
+      }
+      body.dark {
+        background-color: #111827;
+        color: #f9fafb;
+      }
 
       /* Critical card styles to prevent FOUC */
-      .header-card, .footer-card, .content-card {
+      .header-card,
+      .footer-card,
+      .content-card {
         background-color: #ffffff;
         border-left-color: #60a5fa;
       }
-      html.dark .header-card, html.dark .footer-card, html.dark .content-card {
+      html.dark .header-card,
+      html.dark .footer-card,
+      html.dark .content-card {
         background-color: #1f2937;
         border-left-color: #3b82f6;
       }
 
       /* Critical text styles */
-      .header-title, .footer-title, h1, h2 {
+      .header-title,
+      .footer-title,
+      h1,
+      h2 {
         color: #1a1a1a;
       }
-      html.dark .header-title, html.dark .footer-title, html.dark h1, html.dark h2 {
+      html.dark .header-title,
+      html.dark .footer-title,
+      html.dark h1,
+      html.dark h2 {
         color: #f9fafb;
       }
 
       /* Hide content until theme is applied */
-      .theme-loading { visibility: hidden; }
-      .theme-loaded { visibility: visible; }
+      .theme-loading {
+        visibility: hidden;
+      }
+      .theme-loaded {
+        visibility: visible;
+      }
 
       /* Smooth transitions only after theme is loaded */
       .theme-loaded * {
-        transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+        transition:
+          background-color 0.2s ease,
+          border-color 0.2s ease,
+          color 0.2s ease;
       }
     </style>
 
@@ -73,21 +105,34 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
     <meta property="og:description" content={description} />
 
     <!-- Preconnect to external domains -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
 
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@100..900&display=swap" rel="stylesheet">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@100..900&display=swap"
+      rel="stylesheet"
+    />
 
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+      integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
   </head>
-  <body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans antialiased theme-loading">
+  <body
+    class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans antialiased theme-loading"
+  >
     <noscript>
       <style>
         /* Show content for users with JavaScript disabled */
-        .theme-loading { visibility: visible !important; }
+        .theme-loading {
+          visibility: visible !important;
+        }
       </style>
     </noscript>
 
@@ -95,9 +140,9 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 
     <!-- Remove theme loading class after page loads -->
     <script is:inline>
-      document.addEventListener('DOMContentLoaded', function() {
-        document.body.classList.remove('theme-loading');
-        document.body.classList.add('theme-loaded');
+      document.addEventListener("DOMContentLoaded", function () {
+        document.body.classList.remove("theme-loading");
+        document.body.classList.add("theme-loaded");
       });
     </script>
   </body>
@@ -123,7 +168,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
     --text-muted: #6b7280;
     --border-primary: #e5e7eb;
     --border-accent: #60a5fa;
-    --shadow-card: 0 2px 8px 0 rgba(0,0,0,0.06);
+    --shadow-card: 0 2px 8px 0 rgba(0, 0, 0, 0.06);
   }
 
   .dark {
@@ -136,7 +181,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
     --text-muted: #9ca3af;
     --border-primary: #374151;
     --border-accent: #3b82f6;
-    --shadow-card: 0 2px 8px 0 rgba(0,0,0,0.3);
+    --shadow-card: 0 2px 8px 0 rgba(0, 0, 0, 0.3);
   }
 
   * {
@@ -144,11 +189,16 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
   }
 
   html {
-    font-family: 'Lexend Deca', system-ui, sans-serif;
+    font-family: "Lexend Deca", system-ui, sans-serif;
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Lexend Deca', system-ui, sans-serif;
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: "Lexend Deca", system-ui, sans-serif;
     font-weight: 600;
   }
 
@@ -171,5 +221,5 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
   }
 </style>
 
-<link rel="stylesheet" href="/cards.css">
-<link rel="stylesheet" href="/dark-mode.css">
+<link rel="stylesheet" href="/cards.css" />
+<link rel="stylesheet" href="/dark-mode.css" />

@@ -7,4 +7,13 @@ import preact from '@astrojs/preact';
 export default defineConfig({
   integrations: [tailwind(), preact()],
   site: "https://shir.github.io",
+  vite: {
+    server: {
+      allowedHosts: [
+        '.ngrok-free.app',
+        '.ngrok.io',
+        'localhost'
+      ]
+    }
+  }
 });
