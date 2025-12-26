@@ -1,5 +1,5 @@
 import { h } from 'preact';
-import { useState, useEffect } from 'preact/hooks';
+import { useState, useEffect, useRef } from 'preact/hooks';
 
 export default function DietaryRestrictionsTool({ data }) {
   const [selectedAttendees, setSelectedAttendees] = useState([]);
@@ -8,6 +8,9 @@ export default function DietaryRestrictionsTool({ data }) {
   const [copied, setCopied] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
   const [urlCopied, setUrlCopied] = useState(false);
+  const [searchInput, setSearchInput] = useState("");
+  const [showDropdown, setShowDropdown] = useState(false);
+  const inputRef = useRef(null);
 
   // URL Parameter Sync - Load from URL on mount
   useEffect(() => {
@@ -178,6 +181,53 @@ export default function DietaryRestrictionsTool({ data }) {
     );
   }
 
+  // Autocomplete functions
+  function getFilteredMembers() {
+    if (!searchInput.trim()) return data.members;
+
+    const search = searchInput.toLowerCase();
+    return data.members.filter(member =>
+      member.name.toLowerCase().includes(search) &&
+      !selectedAttendees.includes(member.name.toLowerCase())
+    );
+  }
+
+  function handleSelectMember(memberName) {
+    const lowerName = memberName.toLowerCase();
+    if (!selectedAttendees.includes(lowerName)) {
+      setSelectedAttendees(prev => [...prev, lowerName]);
+    }
+    setSearchInput("");
+    setShowDropdown(false);
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }
+
+  function handleRemoveMember(memberName) {
+    setSelectedAttendees(prev => prev.filter(n => n !== memberName));
+  }
+
+  function handleSearchInput(e) {
+    setSearchInput(e.target.value);
+    setShowDropdown(true);
+  }
+
+  function handleSearchFocus() {
+    setShowDropdown(true);
+  }
+
+  function handleSearchBlur() {
+    // Delay hiding dropdown to allow click events to fire
+    setTimeout(() => setShowDropdown(false), 200);
+  }
+
+  // Get member display name from lowercase name
+  function getMemberDisplayName(lowerName) {
+    const member = data.members.find(m => m.name.toLowerCase() === lowerName);
+    return member ? member.name : lowerName;
+  }
+
   if (!data || !data.members || data.members.length === 0) {
     return (
       <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6">
@@ -193,18 +243,56 @@ export default function DietaryRestrictionsTool({ data }) {
       {/* Attendee Selection */}
       <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border-l-4 border-green-500">
         <h2 class="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">Select Attendees</h2>
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {data.members.map(member => (
-            <label key={member.name} class="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={selectedAttendees.includes(member.name.toLowerCase())}
-                onChange={() => handleAttendeeChange(member.name)}
-                class="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 dark:focus:ring-green-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-              />
-              <span class="text-gray-900 dark:text-gray-100">{member.name}</span>
-            </label>
-          ))}
+
+        {/* Autocomplete Input with Chips */}
+        <div class="relative">
+          <div class="flex flex-wrap gap-2 p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus-within:ring-2 focus-within:ring-green-500 focus-within:border-transparent">
+            {/* Selected Chips */}
+            {selectedAttendees.map(attendee => (
+              <span
+                key={attendee}
+                class="inline-flex items-center gap-1 px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 rounded-full text-sm font-medium"
+              >
+                {getMemberDisplayName(attendee)}
+                <button
+                  onClick={() => handleRemoveMember(attendee)}
+                  class="hover:bg-green-200 dark:hover:bg-green-800 rounded-full p-0.5 transition-colors"
+                  aria-label={`Remove ${getMemberDisplayName(attendee)}`}
+                >
+                  <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </span>
+            ))}
+
+            {/* Search Input */}
+            <input
+              ref={inputRef}
+              type="text"
+              value={searchInput}
+              onInput={handleSearchInput}
+              onFocus={handleSearchFocus}
+              onBlur={handleSearchBlur}
+              placeholder={selectedAttendees.length === 0 ? "Type to search attendees..." : "Add more..."}
+              class="flex-1 min-w-[150px] outline-none bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
+            />
+          </div>
+
+          {/* Dropdown */}
+          {showDropdown && getFilteredMembers().length > 0 && (
+            <div class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+              {getFilteredMembers().map(member => (
+                <button
+                  key={member.name}
+                  onClick={() => handleSelectMember(member.name)}
+                  class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 transition-colors first:rounded-t-lg last:rounded-b-lg"
+                >
+                  {member.name}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
