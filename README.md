@@ -69,6 +69,20 @@ Dairy         Airborne                   Small amounts
 Nuts                                     No
 ```
 
+For listed foods/allergens, the cell values should be:
+
+- **"No"**: Can't eat this
+- **"Airborne"**: Airborne allergy (parsed from any cell containing the word "Airborne")
+- **"Small amounts"**: Can tolerate small amounts
+- **"Yes"**: Has this non-allergen dietary restriction (see below)
+
+There are 3 non-allergen dietary restrictions in Column A:
+
+- Vegetarian
+- Vegan
+- None
+
+
 #### Create Service Account
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
@@ -130,16 +144,6 @@ Add two secrets:
 
 Push to main branch or manually trigger the workflows in the Actions tab.
 
-## Google Sheets Data Format
-
-### Cell Value Formats
-
-- **Empty or "No"**: No restriction
-- **"Yes" or any text**: Has this restriction
-- **"Airborne"**: Airborne allergy (parsed automatically)
-- **"Small amounts"**: Can tolerate small amounts
-- **"Airborne (notes)"**: Airborne with notes in parentheses
-
 ### Severity Detection
 
 The sync script automatically detects:
@@ -155,13 +159,6 @@ The sync script automatically detects:
 - `npm run build` - Build for production
 - `npm run preview` - Preview production build
 - `node .github/scripts/sync-dietary-data.js` - Manually sync from Google Sheets
-
-### Customization
-
-- Update `src/components/Header.astro` to change header
-- Update `src/components/Footer.astro` to change footer
-- Modify `tailwind.config.mjs` for custom colors
-- Edit `.github/workflows/content-sync.yml` to change sync schedule
 
 ## License
 
