@@ -1,17 +1,20 @@
 import { h } from 'preact';
 import { useState, useEffect, useRef } from 'preact/hooks';
 
-// Hash name to a deterministic hex color
+// Hash name to a deterministic cool color (blues, greens, purples, cyans)
 function nameToColor(name) {
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);
   }
 
-  // Generate HSL values for better color distribution
-  const hue = Math.abs(hash) % 360;
-  const saturation = 65 + (Math.abs(hash >> 8) % 20); // 65-85%
-  const lightness = 45 + (Math.abs(hash >> 16) % 15); // 45-60%
+  // Cool color range: 180-300 (cyan, blue, purple, with some green)
+  const hueRange = 120; // Range of 120 degrees
+  const hueOffset = 180; // Start at cyan (180°)
+  const hue = hueOffset + (Math.abs(hash) % hueRange);
+
+  const saturation = 50 + (Math.abs(hash >> 8) % 30); // 50-80%
+  const lightness = 40 + (Math.abs(hash >> 16) % 20); // 40-60%
 
   return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 }
@@ -33,6 +36,7 @@ export default function DietaryRestrictionsTool({ data }) {
   const [copied, setCopied] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
   const [urlCopied, setUrlCopied] = useState(false);
+  const [shared, setShared] = useState(false);
   const [searchInput, setSearchInput] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
   const [currentStep, setCurrentStep] = useState(1); // 1 = selection, 2 = summary
@@ -132,11 +136,38 @@ export default function DietaryRestrictionsTool({ data }) {
         });
     });
 
+    // Add people with no restrictions to "None" category
+    attendeeData.forEach(person => {
+      if (person.restrictions.length === 0) {
+        if (!otherMap.has('None')) {
+          otherMap.set('None', []);
+        }
+        otherMap.get('None').push({
+          name: person.name,
+          severity: 'yes',
+          notes: 'None'
+        });
+      }
+    });
+
+    // Sort other restrictions: Vegetarian, Vegan, None go last
+    const dietaryPreferences = ['vegetarian', 'vegan', 'none'];
+    const sortedOther = Array.from(otherMap.entries()).sort((a, b) => {
+      const aLower = a[0].toLowerCase();
+      const bLower = b[0].toLowerCase();
+      const aIsPreference = dietaryPreferences.includes(aLower);
+      const bIsPreference = dietaryPreferences.includes(bLower);
+
+      if (aIsPreference && !bIsPreference) return 1;
+      if (!aIsPreference && bIsPreference) return -1;
+      return 0;
+    });
+
     setSummary({
       mealName: meal,
       attendees: attendeeData.map(a => a.name),
       airborne: Array.from(airborneMap.entries()),
-      other: Array.from(otherMap.entries()),
+      other: sortedOther,
       byPerson: attendeeData
     });
   }
@@ -170,11 +201,12 @@ export default function DietaryRestrictionsTool({ data }) {
     text += `Attendees: ${summary.attendees.length} (${summary.attendees.join(', ')})\n\n`;
 
     if (summary.airborne.length > 0) {
-      text += "Airborne Allergies:\n";
+      text += "⚠️  AIRBORNE ALLERGIES ⚠️\n";
+      text += "==========================================\n";
       summary.airborne.forEach(([item, people]) => {
         text += `${item}\n`;
         people.forEach(p => {
-          text += `  - ${p.name}${p.notes ? ` (${p.notes})` : ''}\n`;
+          text += `  - ${p.name}\n`;
         });
       });
       text += "\n";
@@ -186,7 +218,7 @@ export default function DietaryRestrictionsTool({ data }) {
         text += `${item}\n`;
         people.forEach(p => {
           const detail = p.severity !== "yes" ? ` (${p.severity})` : '';
-          text += `  • ${p.name}${detail}\n`;
+          text += `  - ${p.name}${detail}\n`;
         });
       });
       text += "\n";
@@ -199,7 +231,7 @@ export default function DietaryRestrictionsTool({ data }) {
                         r.severity !== "yes" ? ` (${r.severity})` : '';
         return `${r.item}${severity}`;
       });
-      text += `• ${person.name}: ${restrictions.join(', ') || 'None'}\n`;
+      text += `- ${person.name}: ${restrictions.join(', ') || 'None'}\n`;
     });
 
     return text;
@@ -233,10 +265,40 @@ export default function DietaryRestrictionsTool({ data }) {
     setTimeout(() => setDownloaded(false), 2000);
   }
 
-  function shareUrl() {
-    // Copy the current URL from the browser's address bar
+  async function shareUrl() {
     const url = window.location.href;
-    navigator.clipboard.writeText(url);
+    const title = summary?.mealName || 'Dietary Dashboard';
+
+    // Check if Web Share API is supported
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: title,
+          text: 'Check out these dietary restrictions',
+          url: url,
+        });
+        setShared(true);
+        setTimeout(() => setShared(false), 2000);
+      } catch (err) {
+        // User cancelled or error occurred
+        if (err.name !== 'AbortError') {
+          // Fallback to copying URL
+          await navigator.clipboard.writeText(url);
+          setUrlCopied(true);
+          setTimeout(() => setUrlCopied(false), 2000);
+        }
+      }
+    } else {
+      // Fallback for browsers that don't support Web Share API
+      await navigator.clipboard.writeText(url);
+      setUrlCopied(true);
+      setTimeout(() => setUrlCopied(false), 2000);
+    }
+  }
+
+  async function copyUrl() {
+    const url = window.location.href;
+    await navigator.clipboard.writeText(url);
     setUrlCopied(true);
     setTimeout(() => setUrlCopied(false), 2000);
   }
@@ -483,7 +545,7 @@ export default function DietaryRestrictionsTool({ data }) {
           </div>
           <button
             onClick={handleGenerateNew}
-            class="ml-auto px-4 py-2 bg-gray-600 text-white text-sm font-medium rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors"
+            class="ml-auto px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
           >
             ← Modify Selection
           </button>
@@ -497,24 +559,38 @@ export default function DietaryRestrictionsTool({ data }) {
             <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
               {summary.mealName || 'Dietary Summary'}
             </h2>
-            <div class="flex gap-2">
+            <div class="flex gap-1 items-center">
               <button
                 onClick={copyToClipboard}
-                class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                class="w-8 h-8 flex items-center justify-center text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 focus:outline-none transition-colors text-lg"
+                title={copied ? 'Copied!' : 'Copy to clipboard'}
+                aria-label="Copy to clipboard"
               >
-                {copied ? '✓ Copied!' : 'Copy'}
+                <i class={`fa-solid ${copied ? 'fa-check' : 'fa-copy'}`}></i>
               </button>
               <button
                 onClick={downloadAsTextFile}
-                class="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
+                class="w-8 h-8 flex items-center justify-center text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 focus:outline-none transition-colors text-lg"
+                title={downloaded ? 'Downloaded!' : 'Download as text file'}
+                aria-label="Download as text file"
               >
-                {downloaded ? '✓ Downloaded!' : 'Download'}
+                <i class={`fa-solid ${downloaded ? 'fa-check' : 'fa-download'}`}></i>
               </button>
               <button
                 onClick={shareUrl}
-                class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                class="w-8 h-8 flex items-center justify-center text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 focus:outline-none transition-colors text-lg"
+                title={shared ? 'Shared!' : 'Share via...'}
+                aria-label="Share"
               >
-                {urlCopied ? '✓ URL Copied!' : 'Share URL'}
+                <i class={`fa-solid ${shared ? 'fa-check' : 'fa-share-nodes'}`}></i>
+              </button>
+              <button
+                onClick={copyUrl}
+                class="w-8 h-8 flex items-center justify-center text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 focus:outline-none transition-colors text-lg"
+                title={urlCopied ? 'Link copied!' : 'Copy link'}
+                aria-label="Copy link"
+              >
+                <i class={`fa-solid ${urlCopied ? 'fa-check' : 'fa-link'}`}></i>
               </button>
             </div>
           </div>
@@ -534,7 +610,7 @@ export default function DietaryRestrictionsTool({ data }) {
             <div class="bg-red-50 dark:bg-red-950 border-2 border-red-500 dark:border-red-600 rounded-lg p-6">
               <h3 class="text-xl font-bold text-red-700 dark:text-red-400 mb-4 flex items-center gap-2">
                 <i class="fa-solid fa-triangle-exclamation"></i>
-                AIRBORNE ALLERGIES - CRITICAL
+                AIRBORNE ALLERGIES
               </h3>
               <div class="space-y-4">
                 {summary.airborne.map(([item, people]) => (
@@ -556,7 +632,7 @@ export default function DietaryRestrictionsTool({ data }) {
           {/* Other Dietary Restrictions */}
           {summary.other.length > 0 && (
             <div>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              <h3 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b-2 border-gray-300 dark:border-gray-600">
                 Dietary Restrictions
               </h3>
               <div class="space-y-4">
@@ -578,26 +654,33 @@ export default function DietaryRestrictionsTool({ data }) {
 
           {/* Restrictions by Person */}
           <div>
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            <h3 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4 pb-2 border-b-2 border-gray-300 dark:border-gray-600">
               Restrictions by Person
             </h3>
             <ul class="ml-6 space-y-2 list-disc marker:text-blue-600">
-              {summary.byPerson.map(person => (
-                <li key={person.name} class="text-gray-900 dark:text-gray-100">
-                  <span class="font-medium">{person.name}:</span>{' '}
-                  {person.restrictions.length > 0 ? (
-                    <span class="text-gray-700 dark:text-gray-300">
-                      {person.restrictions.map(r => {
-                        const severity = r.severity === "airborne" ? " (AIRBORNE)" :
-                                        r.severity !== "yes" ? ` (${r.severity})` : '';
-                        return `${r.item}${severity}`;
-                      }).join(', ')}
-                    </span>
-                  ) : (
-                    <span class="text-gray-500 dark:text-gray-400 italic">None</span>
-                  )}
-                </li>
-              ))}
+              {summary.byPerson.map(person => {
+                // Check if person only has "None" or no restrictions
+                const hasOnlyNone = person.restrictions.length === 1 &&
+                                    person.restrictions[0].item.toLowerCase() === 'none';
+                const hasNoRestrictions = person.restrictions.length === 0;
+
+                return (
+                  <li key={person.name} class="text-gray-900 dark:text-gray-100">
+                    <span class="font-medium">{person.name}:</span>{' '}
+                    {hasOnlyNone || hasNoRestrictions ? (
+                      <span class="text-gray-700 dark:text-gray-300 italic">None</span>
+                    ) : (
+                      <span class="text-gray-700 dark:text-gray-300">
+                        {person.restrictions.map(r => {
+                          const severity = r.severity === "airborne" ? " (AIRBORNE)" :
+                                          r.severity !== "yes" ? ` (${r.severity})` : '';
+                          return `${r.item}${severity}`;
+                        }).join(', ')}
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           </div>
         </div>
