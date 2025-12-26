@@ -10,6 +10,7 @@ export default function DietaryRestrictionsTool({ data }) {
   const [urlCopied, setUrlCopied] = useState(false);
   const [searchInput, setSearchInput] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1); // 1 = selection, 2 = summary
   const inputRef = useRef(null);
 
   // URL Parameter Sync - Load from URL on mount
@@ -29,8 +30,24 @@ export default function DietaryRestrictionsTool({ data }) {
       // Auto-generate summary if attendees were loaded from URL
       if (attendees.length > 0) {
         generateSummary(attendees, mealParam ? decodeURIComponent(mealParam) : '');
+        setCurrentStep(2);
       }
     }
+
+    // Handle browser back/forward buttons
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const attendeesParam = params.get('attendees');
+
+      if (!attendeesParam) {
+        // No params in URL, go back to step 1
+        setCurrentStep(1);
+        setSummary(null);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
   function generateSummary(attendees, meal) {
@@ -87,6 +104,23 @@ export default function DietaryRestrictionsTool({ data }) {
 
   function handleGenerate() {
     generateSummary(selectedAttendees, mealName);
+    setCurrentStep(2);
+
+    // Update URL to reflect current selection
+    const params = new URLSearchParams();
+    params.set('attendees', selectedAttendees.join(','));
+    if (mealName) {
+      params.set('meal', encodeURIComponent(mealName));
+    }
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    window.history.pushState({}, '', newUrl);
+  }
+
+  function handleGenerateNew() {
+    setCurrentStep(1);
+    setSummary(null);
+    // Clear URL when going back to selection
+    window.history.pushState({}, '', window.location.pathname);
   }
 
   function formatSummaryAsText(summary) {
@@ -161,12 +195,8 @@ export default function DietaryRestrictionsTool({ data }) {
   }
 
   function shareUrl() {
-    const params = new URLSearchParams();
-    params.set('attendees', selectedAttendees.join(','));
-    if (mealName) {
-      params.set('meal', encodeURIComponent(mealName));
-    }
-    const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+    // Copy the current URL from the browser's address bar
+    const url = window.location.href;
     navigator.clipboard.writeText(url);
     setUrlCopied(true);
     setTimeout(() => setUrlCopied(false), 2000);
@@ -238,88 +268,123 @@ export default function DietaryRestrictionsTool({ data }) {
     );
   }
 
-  return (
-    <div class="space-y-6">
-      {/* Attendee Selection */}
-      <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border-l-4 border-green-500">
-        <h2 class="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">Select Attendees</h2>
+  // Step 1: Selection Interface
+  if (currentStep === 1) {
+    return (
+      <div class="space-y-6 animate-fade-in">
+        {/* Attendee Selection */}
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border-l-4 border-green-500">
+          <h2 class="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">Select Attendees</h2>
 
-        {/* Autocomplete Input with Chips */}
-        <div class="relative">
-          <div class="flex flex-wrap gap-2 p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus-within:ring-2 focus-within:ring-green-500 focus-within:border-transparent">
-            {/* Selected Chips */}
-            {selectedAttendees.map(attendee => (
-              <span
-                key={attendee}
-                class="inline-flex items-center gap-1 px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 rounded-full text-sm font-medium"
-              >
-                {getMemberDisplayName(attendee)}
-                <button
-                  onClick={() => handleRemoveMember(attendee)}
-                  class="hover:bg-green-200 dark:hover:bg-green-800 rounded-full p-0.5 transition-colors"
-                  aria-label={`Remove ${getMemberDisplayName(attendee)}`}
+          {/* Autocomplete Input with Chips */}
+          <div class="relative">
+            <div class="flex flex-wrap gap-2 p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus-within:ring-2 focus-within:ring-green-500 focus-within:border-transparent">
+              {/* Selected Chips */}
+              {selectedAttendees.map(attendee => (
+                <span
+                  key={attendee}
+                  class="inline-flex items-center gap-1 px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 rounded-full text-sm font-medium"
                 >
-                  <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
-                </button>
-              </span>
-            ))}
-
-            {/* Search Input */}
-            <input
-              ref={inputRef}
-              type="text"
-              value={searchInput}
-              onInput={handleSearchInput}
-              onFocus={handleSearchFocus}
-              onBlur={handleSearchBlur}
-              placeholder={selectedAttendees.length === 0 ? "Type to search attendees..." : "Add more..."}
-              class="flex-1 min-w-[150px] outline-none bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
-            />
-          </div>
-
-          {/* Dropdown */}
-          {showDropdown && getFilteredMembers().length > 0 && (
-            <div class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-              {getFilteredMembers().map(member => (
-                <button
-                  key={member.name}
-                  onClick={() => handleSelectMember(member.name)}
-                  class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 transition-colors first:rounded-t-lg last:rounded-b-lg"
-                >
-                  {member.name}
-                </button>
+                  {getMemberDisplayName(attendee)}
+                  <button
+                    onClick={() => handleRemoveMember(attendee)}
+                    class="hover:bg-green-200 dark:hover:bg-green-800 rounded-full p-0.5 transition-colors"
+                    aria-label={`Remove ${getMemberDisplayName(attendee)}`}
+                  >
+                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                </span>
               ))}
+
+              {/* Search Input */}
+              <input
+                ref={inputRef}
+                type="text"
+                value={searchInput}
+                onInput={handleSearchInput}
+                onFocus={handleSearchFocus}
+                onBlur={handleSearchBlur}
+                placeholder={selectedAttendees.length === 0 ? "Type to search attendees..." : "Add more..."}
+                class="flex-1 min-w-[150px] outline-none bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
+              />
             </div>
-          )}
+
+            {/* Dropdown */}
+            {showDropdown && getFilteredMembers().length > 0 && (
+              <div class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                {getFilteredMembers().map(member => (
+                  <button
+                    key={member.name}
+                    onClick={() => handleSelectMember(member.name)}
+                    class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 transition-colors first:rounded-t-lg last:rounded-b-lg"
+                  >
+                    {member.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Meal Name Input */}
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border-l-4 border-green-500">
+          <label htmlFor="meal-name" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+            Meal Name (Optional)
+          </label>
+          <input
+            type="text"
+            id="meal-name"
+            value={mealName}
+            onInput={(e) => setMealName(e.target.value)}
+            placeholder="e.g., Shabbat Dinner, RH1 Lunch"
+            class="block w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          />
+        </div>
+
+        {/* Generate Button */}
+        <div class="flex justify-center">
+          <button
+            onClick={handleGenerate}
+            disabled={selectedAttendees.length === 0}
+            class="px-8 py-3 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            Generate Summary
+          </button>
         </div>
       </div>
+    );
+  }
 
-      {/* Meal Name Input */}
-      <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border-l-4 border-green-500">
-        <label htmlFor="meal-name" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-          Meal Name (Optional)
-        </label>
-        <input
-          type="text"
-          id="meal-name"
-          value={mealName}
-          onInput={(e) => setMealName(e.target.value)}
-          placeholder="e.g., Shabbat Dinner, RH1 Lunch"
-          class="block w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-        />
-      </div>
-
-      {/* Generate Button */}
-      <div class="flex justify-center">
-        <button
-          onClick={handleGenerate}
-          disabled={selectedAttendees.length === 0}
-          class="px-8 py-3 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          Generate Summary
-        </button>
+  // Step 2: Summary View
+  return (
+    <div class="space-y-6 animate-fade-in">
+      {/* Compact Attendee Pills Header */}
+      <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border-l-4 border-green-500">
+        <div class="flex flex-wrap items-center gap-3">
+          <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">
+            Attendees ({selectedAttendees.length}):
+          </span>
+          <div class="flex flex-wrap gap-2">
+            {selectedAttendees.map(attendee => (
+              <button
+                key={attendee}
+                onClick={handleGenerateNew}
+                class="inline-flex items-center px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 rounded-full text-sm font-medium hover:bg-green-200 dark:hover:bg-green-800 transition-colors cursor-pointer"
+                title="Click to modify selection"
+              >
+                {getMemberDisplayName(attendee)}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={handleGenerateNew}
+            class="ml-auto px-4 py-2 bg-gray-600 text-white text-sm font-medium rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors"
+          >
+            ← Modify Selection
+          </button>
+        </div>
       </div>
 
       {/* Summary Display */}
