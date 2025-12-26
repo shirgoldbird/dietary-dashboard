@@ -5,9 +5,7 @@ import DarkModeToggle from './DarkModeToggle.jsx';
 <header class="header-card">
   <a href="/" class="header-logo">
     <span class="header-icon">
-      <svg viewBox="0 0 24 24" class="header-icon-svg">
-        <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
-      </svg>
+      <i class="fa-solid fa-utensils header-icon-fa"></i>
     </span>
     <span class="header-title">
       Dietary Dashboard
@@ -21,7 +19,7 @@ import DarkModeToggle from './DarkModeToggle.jsx';
 <style>
 .header-card {
   background: #fff;
-  border-left: 8px solid #aaf0d1;
+  border-left: 8px solid #60a5fa;
   border-radius: 0.5rem;
   box-shadow: 0 2px 8px 0 rgba(0,0,0,0.06);
   padding: 1rem 2rem;
@@ -45,10 +43,9 @@ import DarkModeToggle from './DarkModeToggle.jsx';
   width: 2rem;
   height: 2rem;
 }
-.header-icon-svg {
-  width: 1.75rem;
-  height: 1.75rem;
-  color: #10b981;
+.header-icon-fa {
+  font-size: 1.5rem;
+  color: #3b82f6;
 }
 .header-title {
   font-family: 'Playfair Display', serif;
@@ -72,7 +69,7 @@ import DarkModeToggle from './DarkModeToggle.jsx';
   transition: color 0.15s;
 }
 .header-link:hover {
-  color: #aaf0d1;
+  color: #60a5fa;
 }
 
 @media (max-width: 768px) {

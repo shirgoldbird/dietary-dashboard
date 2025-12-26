@@ -1,6 +1,31 @@
 import { h } from 'preact';
 import { useState, useEffect, useRef } from 'preact/hooks';
 
+// Hash name to a deterministic hex color
+function nameToColor(name) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+
+  // Generate HSL values for better color distribution
+  const hue = Math.abs(hash) % 360;
+  const saturation = 65 + (Math.abs(hash >> 8) % 20); // 65-85%
+  const lightness = 45 + (Math.abs(hash >> 16) % 15); // 45-60%
+
+  return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+}
+
+// Get contrasting text color (light or dark) based on background
+function getContrastColor(hslColor) {
+  // Extract lightness from HSL
+  const lightnessMatch = hslColor.match(/(\d+)%\)$/);
+  if (!lightnessMatch) return '#ffffff';
+
+  const lightness = parseInt(lightnessMatch[1]);
+  return lightness > 55 ? '#1a1a1a' : '#ffffff';
+}
+
 export default function DietaryRestrictionsTool({ data }) {
   const [selectedAttendees, setSelectedAttendees] = useState([]);
   const [mealName, setMealName] = useState("");
@@ -330,30 +355,35 @@ export default function DietaryRestrictionsTool({ data }) {
     return (
       <div class="space-y-6 animate-fade-in">
         {/* Attendee Selection */}
-        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border-l-4 border-green-500">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border-l-4 border-blue-500">
           <h2 class="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">Select Attendees</h2>
 
           {/* Autocomplete Input with Chips */}
           <div class="relative">
-            <div class="flex flex-wrap gap-2 p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus-within:ring-2 focus-within:ring-green-500 focus-within:border-transparent">
+            <div class="flex flex-wrap gap-2 p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent">
               {/* Selected Chips */}
-              {selectedAttendees.map(attendee => (
-                <span
-                  key={attendee}
-                  class="inline-flex items-center gap-1 px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 rounded-full text-sm font-medium"
-                >
-                  {getMemberDisplayName(attendee)}
-                  <button
-                    onClick={() => handleRemoveMember(attendee)}
-                    class="hover:bg-green-200 dark:hover:bg-green-800 rounded-full p-0.5 transition-colors"
-                    aria-label={`Remove ${getMemberDisplayName(attendee)}`}
+              {selectedAttendees.map(attendee => {
+                const bgColor = nameToColor(attendee);
+                const textColor = getContrastColor(bgColor);
+                return (
+                  <span
+                    key={attendee}
+                    style={{ backgroundColor: bgColor, color: textColor }}
+                    class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium"
                   >
-                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                    </svg>
-                  </button>
-                </span>
-              ))}
+                    {getMemberDisplayName(attendee)}
+                    <button
+                      onClick={() => handleRemoveMember(attendee)}
+                      class="hover:opacity-80 rounded-full p-0.5 transition-opacity"
+                      aria-label={`Remove ${getMemberDisplayName(attendee)}`}
+                    >
+                      <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  </span>
+                );
+              })}
 
               {/* Search Input */}
               <input
@@ -384,7 +414,7 @@ export default function DietaryRestrictionsTool({ data }) {
                     onClick={() => handleSelectMember(member.name)}
                     class={`w-full text-left px-4 py-2 text-gray-900 dark:text-gray-100 transition-colors first:rounded-t-lg last:rounded-b-lg ${
                       index === highlightedIndex
-                        ? 'bg-green-100 dark:bg-green-900'
+                        ? 'bg-blue-100 dark:bg-blue-900'
                         : 'hover:bg-gray-100 dark:hover:bg-gray-600'
                     }`}
                   >
@@ -397,7 +427,7 @@ export default function DietaryRestrictionsTool({ data }) {
         </div>
 
         {/* Meal Name Input */}
-        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border-l-4 border-green-500">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border-l-4 border-blue-500">
           <label htmlFor="meal-name" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
             Meal Name (Optional)
           </label>
@@ -406,8 +436,8 @@ export default function DietaryRestrictionsTool({ data }) {
             id="meal-name"
             value={mealName}
             onInput={(e) => setMealName(e.target.value)}
-            placeholder="e.g., Shabbat Dinner, RH1 Lunch"
-            class="block w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            placeholder="e.g., Shabbos Dinner, Rosh Hashana Day 1 Lunch"
+            class="block w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
 
@@ -416,7 +446,7 @@ export default function DietaryRestrictionsTool({ data }) {
           <button
             onClick={handleGenerate}
             disabled={selectedAttendees.length === 0}
-            class="px-8 py-3 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            class="px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             Generate Summary
           </button>
@@ -429,22 +459,27 @@ export default function DietaryRestrictionsTool({ data }) {
   return (
     <div class="space-y-6 animate-fade-in">
       {/* Compact Attendee Pills Header */}
-      <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border-l-4 border-green-500">
+      <div class="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border-l-4 border-blue-500">
         <div class="flex flex-wrap items-center gap-3">
           <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">
             Attendees ({selectedAttendees.length}):
           </span>
           <div class="flex flex-wrap gap-2">
-            {selectedAttendees.map(attendee => (
-              <button
-                key={attendee}
-                onClick={handleGenerateNew}
-                class="inline-flex items-center px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 rounded-full text-sm font-medium hover:bg-green-200 dark:hover:bg-green-800 transition-colors cursor-pointer"
-                title="Click to modify selection"
-              >
-                {getMemberDisplayName(attendee)}
-              </button>
-            ))}
+            {selectedAttendees.map(attendee => {
+              const bgColor = nameToColor(attendee);
+              const textColor = getContrastColor(bgColor);
+              return (
+                <button
+                  key={attendee}
+                  onClick={handleGenerateNew}
+                  style={{ backgroundColor: bgColor, color: textColor }}
+                  class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer"
+                  title="Click to modify selection"
+                >
+                  {getMemberDisplayName(attendee)}
+                </button>
+              );
+            })}
           </div>
           <button
             onClick={handleGenerateNew}
@@ -457,7 +492,7 @@ export default function DietaryRestrictionsTool({ data }) {
 
       {/* Summary Display */}
       {summary && (
-        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border-l-4 border-green-500 space-y-6">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border-l-4 border-blue-500 space-y-6">
           <div class="flex justify-between items-start">
             <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
               {summary.mealName || 'Dietary Summary'}
@@ -477,7 +512,7 @@ export default function DietaryRestrictionsTool({ data }) {
               </button>
               <button
                 onClick={shareUrl}
-                class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors"
+                class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
               >
                 {urlCopied ? '✓ URL Copied!' : 'Share URL'}
               </button>
