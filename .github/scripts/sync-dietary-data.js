@@ -117,6 +117,14 @@ function parseRestrictionCell(item, cellValue) {
     notes = notesMatch ? notesMatch[1] : "";
   } else if (lowerValue.includes("small amount")) {
     severity = "small amounts";
+  } else if (lowerValue === "no") {
+    // "No" means they have this allergy/restriction
+    severity = "yes";
+    notes = "No";
+  } else if (lowerValue === "yes") {
+    // "Yes" is used for dietary preferences like Vegetarian, Vegan, None
+    severity = "yes";
+    notes = "Yes";
   }
 
   return { item, severity, notes };
@@ -146,6 +154,12 @@ function parseSheetData(rows) {
 
     if (!restrictionName) continue; // Skip empty rows
 
+    // Skip "Attending?" row - it's not a dietary restriction
+    if (restrictionName.toLowerCase().includes('attending')) {
+      console.log('⏭️  Skipping "Attending?" row');
+      continue;
+    }
+
     if (!restrictionsList.includes(restrictionName)) {
       restrictionsList.push(restrictionName);
     }
@@ -154,7 +168,8 @@ function parseSheetData(rows) {
     for (let j = 1; j < row.length && j <= headers.length; j++) {
       const cellValue = row[j]?.toString().trim() || "";
 
-      if (cellValue && cellValue.toLowerCase() !== 'no') {
+      // Include any non-empty cell value (No, Yes, airborne, small amounts, etc.)
+      if (cellValue) {
         const restriction = parseRestrictionCell(restrictionName, cellValue);
         members[j - 1].restrictions.push(restriction);
       }

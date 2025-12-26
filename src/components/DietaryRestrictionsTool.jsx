@@ -53,7 +53,13 @@ export default function DietaryRestrictionsTool({ data }) {
   function generateSummary(attendees, meal) {
     const attendeeData = data.members.filter(m =>
       attendees.includes(m.name.toLowerCase())
-    );
+    ).map(person => ({
+      ...person,
+      // Filter out "Attending?" restriction entries
+      restrictions: person.restrictions.filter(r =>
+        !r.item.toLowerCase().includes('attending')
+      )
+    }));
 
     if (attendeeData.length === 0) {
       setSummary(null);
