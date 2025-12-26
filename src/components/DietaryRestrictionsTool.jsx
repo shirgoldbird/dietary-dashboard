@@ -29,6 +29,77 @@ function getContrastColor(hslColor) {
   return lightness > 55 ? '#1a1a1a' : '#ffffff';
 }
 
+// ========================================
+// DIETARY RESTRICTIONS SORTING CONFIGURATION
+// ========================================
+// This controls the order that restrictions appear in the summary.
+// Edit this configuration to change sorting behavior.
+const RESTRICTION_SORT_CONFIG = {
+  // Items in this list appear first, in the order specified
+  priorityItems: [
+    'Vegetarian',
+    'Vegan',
+    'gluten' // Special: matches any item containing "gluten" (case-insensitive)
+  ],
+
+  // After priority items, remaining items are sorted by:
+  // - Number of people affected (most to least)
+
+  // Items in this list appear last, in the order specified
+  bottomItems: [
+    'None'
+  ]
+};
+
+// Helper function to sort dietary restrictions based on config
+function sortDietaryRestrictions(restrictionsArray) {
+  const config = RESTRICTION_SORT_CONFIG;
+
+  return restrictionsArray.sort((a, b) => {
+    const [itemA, peopleA] = a;
+    const [itemB, peopleB] = b;
+    const itemALower = itemA.toLowerCase();
+    const itemBLower = itemB.toLowerCase();
+
+    // Check if items are in priority list
+    let priorityA = -1;
+    let priorityB = -1;
+
+    config.priorityItems.forEach((priority, index) => {
+      const priorityLower = priority.toLowerCase();
+      // Check for exact match or partial match (for "gluten")
+      if (itemALower === priorityLower || itemALower.includes(priorityLower)) {
+        priorityA = index;
+      }
+      if (itemBLower === priorityLower || itemBLower.includes(priorityLower)) {
+        priorityB = index;
+      }
+    });
+
+    // Check if items are in bottom list
+    const bottomA = config.bottomItems.findIndex(item =>
+      itemALower === item.toLowerCase()
+    );
+    const bottomB = config.bottomItems.findIndex(item =>
+      itemBLower === item.toLowerCase()
+    );
+
+    // Priority items come first
+    if (priorityA !== -1 && priorityB === -1) return -1;
+    if (priorityA === -1 && priorityB !== -1) return 1;
+    if (priorityA !== -1 && priorityB !== -1) return priorityA - priorityB;
+
+    // Bottom items come last
+    if (bottomA !== -1 && bottomB === -1) return 1;
+    if (bottomA === -1 && bottomB !== -1) return -1;
+    if (bottomA !== -1 && bottomB !== -1) return bottomA - bottomB;
+
+    // For everything else, sort by number of people (descending)
+    return peopleB.length - peopleA.length;
+  });
+}
+// ========================================
+
 export default function DietaryRestrictionsTool({ data }) {
   const [selectedAttendees, setSelectedAttendees] = useState([]);
   const [mealName, setMealName] = useState("");
@@ -150,18 +221,8 @@ export default function DietaryRestrictionsTool({ data }) {
       }
     });
 
-    // Sort other restrictions: Vegetarian, Vegan, None go last
-    const dietaryPreferences = ['vegetarian', 'vegan', 'none'];
-    const sortedOther = Array.from(otherMap.entries()).sort((a, b) => {
-      const aLower = a[0].toLowerCase();
-      const bLower = b[0].toLowerCase();
-      const aIsPreference = dietaryPreferences.includes(aLower);
-      const bIsPreference = dietaryPreferences.includes(bLower);
-
-      if (aIsPreference && !bIsPreference) return 1;
-      if (!aIsPreference && bIsPreference) return -1;
-      return 0;
-    });
+    // Sort other restrictions using the configuration
+    const sortedOther = sortDietaryRestrictions(Array.from(otherMap.entries()));
 
     setSummary({
       mealName: meal,
