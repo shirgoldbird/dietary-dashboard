@@ -219,8 +219,8 @@ export default function DietaryRestrictionsTool({ data }) {
 
     const text = formatSummaryAsText(summary);
     const filename = summary.mealName
-      ? `${summary.mealName.replace(/\s+/g, '-')}-dietary.txt`
-      : 'dietary-restrictions.txt';
+      ? `${summary.mealName.replace(/\s+/g, '-')}-dietary-dashboard.txt`
+      : 'dietary-dashboard.txt';
 
     const blob = new Blob([text], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
