@@ -1,0 +1,201 @@
+/* Dark Mode Styles - Unified Theme System */
+
+/* Base dark mode overrides */
+.dark {
+  color-scheme: dark;
+}
+
+/* Layout and container dark modes */
+.dark .page-container {
+  background: var(--bg-primary);
+}
+
+.dark .main-content {
+  background: var(--bg-primary);
+}
+
+/* Card dark modes */
+.dark .content-card,
+.dark .header-card,
+.dark .footer-card,
+.dark .personal-card {
+  background: var(--bg-card);
+  border-left-color: var(--border-accent);
+  box-shadow: var(--shadow-card);
+}
+
+/* Typography dark modes */
+.dark .header-title,
+.dark .footer-title,
+.dark .content-card h1,
+.dark .content-card h2 {
+  color: var(--text-primary);
+}
+
+.dark .header-link,
+.dark .footer-link,
+.dark .footer-legal-link {
+  color: var(--text-secondary);
+}
+
+.dark .header-link:hover,
+.dark .footer-link:hover,
+.dark .footer-legal-link:hover {
+  color: var(--border-accent);
+}
+
+.dark .footer-description,
+.dark .footer-copyright {
+  color: var(--text-muted);
+}
+
+.dark .footer-heading {
+  color: var(--text-primary);
+}
+
+.dark .footer-bottom {
+  border-top-color: var(--border-primary);
+}
+
+/* Form elements dark mode */
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: transparent;
+  border-color: var(--border-primary);
+  color: var(--text-primary);
+}
+
+.dark input:focus,
+.dark select:focus,
+.dark textarea:focus {
+  border-color: var(--border-accent);
+  outline-color: var(--border-accent);
+}
+
+.dark input::placeholder,
+.dark select::placeholder,
+.dark textarea::placeholder {
+  color: var(--text-muted);
+}
+
+/* Labels and text */
+.dark label {
+  color: var(--text-secondary);
+}
+
+.dark .text-gray-700 {
+  color: var(--text-secondary);
+}
+
+.dark .text-gray-600 {
+  color: var(--text-muted);
+}
+
+.dark .text-gray-500 {
+  color: var(--text-muted);
+}
+
+.dark .text-gray-900 {
+  color: var(--text-primary);
+}
+
+.dark .text-gray-800 {
+  color: var(--text-secondary);
+}
+
+/* Personal card elements */
+.dark .personal-tag {
+  border-color: var(--border-accent);
+  background: #064e3b;
+  color: var(--text-primary);
+}
+
+.dark .personal-tag:hover {
+  background: var(--border-accent);
+  color: var(--bg-card);
+}
+
+.dark .personal-respond {
+  background: var(--border-accent);
+  color: var(--bg-card);
+  border-color: var(--border-accent);
+}
+
+.dark .personal-respond:hover {
+  background: #059669;
+  border-color: #059669;
+  color: var(--bg-card);
+}
+
+.dark .personal-respond:focus {
+  box-shadow: 0 0 0 3px #10b98180;
+}
+
+/* Content card markdown styling */
+.dark .content-card p,
+.dark .content-card ul,
+.dark .content-card li {
+  color: var(--text-secondary);
+}
+
+.dark .content-card a {
+  color: var(--border-accent);
+}
+
+.dark .content-card a:hover {
+  color: #34d399;
+}
+
+/* About page button */
+.dark .content-card .about-button {
+  background: var(--border-accent);
+  color: var(--bg-card) !important;
+  border-color: var(--border-accent);
+}
+
+.dark .content-card .about-button:hover {
+  background: #059669;
+  border-color: #059669;
+  color: var(--bg-card) !important;
+}
+
+.dark .content-card .about-button:focus {
+  box-shadow: 0 0 0 3px #10b98180;
+}
+
+/* Google Form wrapper */
+.dark .form-embed-wrapper {
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+}
+
+/* Utility classes for dark mode */
+.dark .bg-gray-50 {
+  background-color: var(--bg-primary);
+}
+
+.dark .bg-gray-100 {
+  background-color: var(--bg-card);
+}
+
+.dark .border-gray-300 {
+  border-color: var(--border-primary);
+}
+
+.dark .border-gray-600 {
+  border-color: var(--border-primary);
+}
+
+.dark .focus\:border-gray-800:focus {
+  border-color: var(--border-accent);
+}
+
+.dark .focus\:border-gray-400:focus {
+  border-color: var(--border-accent);
+}
+
+/* Transitions for smooth theme switching - only when theme is loaded */
+.theme-loaded * {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}

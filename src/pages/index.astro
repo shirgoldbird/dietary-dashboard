@@ -1,0 +1,29 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import DietaryRestrictionsTool from '../components/DietaryRestrictionsTool.jsx';
+import dietaryData from '../data/dietary-restrictions.json';
+---
+
+<Layout title="Dietary Dashboard">
+  <div class="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <Header />
+
+    <main class="space-y-8">
+      <div class="text-center space-y-4">
+        <h1 class="text-4xl md:text-5xl font-bold text-gray-900 dark:text-gray-100">
+          Meal Planning Tool
+        </h1>
+        <p class="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+          Select attendees to generate a comprehensive dietary restrictions summary for your meal.
+          Perfect for planning community gatherings, Shabbat dinners, or any group event.
+        </p>
+      </div>
+
+      <DietaryRestrictionsTool data={dietaryData} client:load />
+    </main>
+
+    <Footer />
+  </div>
+</Layout>

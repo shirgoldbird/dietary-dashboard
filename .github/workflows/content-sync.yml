@@ -1,0 +1,57 @@
+name: Content Sync from Google Sheets
+
+on:
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    # Allow manual triggering
+  push:
+    # Trigger on pushes to main branch (for testing)
+    branches: [ main ]
+
+jobs:
+  sync-content:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Sync dietary data from Google Sheets
+      run: node .github/scripts/sync-dietary-data.js
+      env:
+        GOOGLE_SPREADSHEET_ID: ${{ secrets.GOOGLE_SPREADSHEET_ID }}
+        GOOGLE_SHEETS_CREDENTIALS: ${{ secrets.GOOGLE_SHEETS_CREDENTIALS }}
+
+    - name: Check for changes
+      id: changes
+      run: |
+        if git diff --quiet src/data/dietary-restrictions.json; then
+          echo "no_changes=true" >> $GITHUB_OUTPUT
+        else
+          echo "no_changes=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Commit and push changes
+      if: steps.changes.outputs.no_changes == 'false'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add src/data/dietary-restrictions.json
+        git commit -m "Update dietary restrictions from Google Sheets [skip ci]"
+        git push
+
+    - name: Trigger deployment
+      if: steps.changes.outputs.no_changes == 'false'
+      run: |
+        echo "Content updated, deployment will be triggered automatically"

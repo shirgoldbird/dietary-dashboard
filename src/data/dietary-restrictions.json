@@ -1,0 +1,38 @@
+{
+  "members": [
+    {
+      "name": "Example Person 1",
+      "restrictions": [
+        {
+          "item": "Wheat/Gluten",
+          "severity": "yes",
+          "notes": "Yes"
+        },
+        {
+          "item": "Dairy",
+          "severity": "small amounts",
+          "notes": "Small amounts"
+        }
+      ]
+    },
+    {
+      "name": "Example Person 2",
+      "restrictions": [
+        {
+          "item": "Nuts",
+          "severity": "airborne",
+          "notes": "severe"
+        }
+      ]
+    },
+    {
+      "name": "Example Person 3",
+      "restrictions": []
+    }
+  ],
+  "restrictionsList": [
+    "Wheat/Gluten",
+    "Dairy",
+    "Nuts"
+  ]
+}

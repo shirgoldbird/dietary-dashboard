@@ -1,0 +1,72 @@
+.personal-card {
+  background: #fff;
+  border-left: 8px solid #aaf0d1;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px 0 rgba(0,0,0,0.06);
+  padding: 1.75rem;
+  margin-bottom: 2.5rem;
+  max-width: 42rem;
+  width: 100%;
+  font-family: 'Inter', 'Playfair Display', serif;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+
+.personal-tag {
+  display: inline-block;
+  border: 1.5px solid #aaf0d1;
+  background: #e6fcf7;
+  color: #1a1a1a;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-family: 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  transition: background 0.15s, color 0.15s;
+}
+.personal-tag:hover {
+  background: #aaf0d1;
+  color: #222;
+}
+
+
+.personal-respond {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background: #aaf0d1;
+  color: #1a1a1a;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 0.375rem;
+  border: 1.5px solid #aaf0d1;
+  text-decoration: none;
+  box-shadow: 0 1px 3px 0 rgba(0,0,0,0.04);
+  transition: background 0.15s, color 0.15s, border 0.15s;
+}
+.personal-respond:hover {
+  background: #7be0b2;
+  border-color: #7be0b2;
+  color: #1a1a1a;
+}
+.personal-respond:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px #aaf0d180;
+}
+
+
+.personal-bottom-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  gap: 1rem;
+}
+.personal-card h2 {
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
